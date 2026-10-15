@@ -33,3 +33,5 @@ htmlcov/
 .vscode/
 *.log
 logs/
+files/
+.env.postgres
