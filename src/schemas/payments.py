@@ -10,7 +10,10 @@ from src.utils.enums import Currency, PaymentStatus
 
 
 class PaymentDTO(BaseDTO):
-    id: uuid.UUID = Field(description="Уникальный идентификатор платежа")
+    payment_id: uuid.UUID = Field(
+        validation_alias=AliasChoices("payment_id", "id"),
+        description="Уникальный идентификатор платежа",
+    )
     amount: Decimal = Field(description="Сумма платежа")
     currency: Currency = Field(description="Валюта платежа")
     description: str = Field(description="Описание платежа")
@@ -27,8 +30,15 @@ class PaymentDTO(BaseDTO):
         default=None, description="Дата и время обработки"
     )
 
+    @property
+    def id(self) -> uuid.UUID:
+        return self.payment_id
+
 
 class PaymentAddDTO(BaseDTO):
+    payment_id: uuid.UUID | None = Field(
+        default=None, description="Уникальный идентификатор платежа"
+    )
     amount: Decimal = Field(gt=0, description="Сумма платежа (больше нуля)")
     currency: Currency = Field(description="Валюта платежа")
     description: str = Field(min_length=1, description="Описание платежа")
@@ -86,7 +96,7 @@ class PaymentCreateDTO(BaseDTO):
 
 class PaymentCreateResponseDTO(BaseDTO):
     payment_id: uuid.UUID = Field(
-        validation_alias=AliasChoices("id", "payment_id"),
+        validation_alias=AliasChoices("payment_id", "id"),
         description="Идентификатор созданного платежа",
     )
     status: PaymentStatus = Field(description="Статус платежа (pending)")
@@ -95,7 +105,7 @@ class PaymentCreateResponseDTO(BaseDTO):
 
 class PaymentResponseDTO(BaseDTO):
     payment_id: uuid.UUID = Field(
-        validation_alias=AliasChoices("id", "payment_id"),
+        validation_alias=AliasChoices("payment_id", "id"),
         description="Идентификатор платежа",
     )
     amount: Decimal = Field(description="Сумма")

@@ -8,9 +8,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class APIConfig(BaseModel):
-    host: str
-    port: int
-    api_key: str
+    host: str = "0.0.0.0"
+    port: int = 8888
+    api_key: str = "test-secret-api-key-12345"
     reload: bool = False
 
 
@@ -20,11 +20,11 @@ class HeadersConfig(BaseModel):
 
 
 class DBConfig(BaseModel):
-    host: str
-    port: int
-    user: str
-    password: SecretStr
-    database: str
+    host: str = "localhost"
+    port: int = 5432
+    user: str = "payments"
+    password: SecretStr = SecretStr("payments")
+    database: str = "payments_db"
     echo: bool = False
     expire_on_commit: bool = False
     autoflush: bool = False
@@ -50,10 +50,10 @@ class DBConfig(BaseModel):
 
 
 class RabbitConfig(BaseModel):
-    host: str
-    port: int
-    user: str
-    password: SecretStr
+    host: str = "localhost"
+    port: int = 5672
+    user: str = "guest"
+    password: SecretStr = SecretStr("guest")
 
     queue_name: str = "payments.new"
     retry_queue_name: str = "payments.retry"
@@ -84,9 +84,9 @@ class OutboxConfig(BaseModel):
 
 
 class Settings(BaseSettings):
-    api: APIConfig
-    db: DBConfig
-    rabbit: RabbitConfig
+    api: APIConfig = APIConfig()
+    db: DBConfig = DBConfig()
+    rabbit: RabbitConfig = RabbitConfig()
     headers: HeadersConfig = HeadersConfig()
     processing: ProcessingConfig = ProcessingConfig()
     outbox: OutboxConfig = OutboxConfig()

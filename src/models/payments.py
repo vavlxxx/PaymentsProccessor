@@ -23,7 +23,7 @@ from src.utils.enums import Currency, PaymentStatus
 class PaymentORM(BaseORM):
     __tablename__ = "payments"
 
-    id: Mapped[uuid.UUID] = mapped_column(
+    payment_id: Mapped[uuid.UUID] = mapped_column(
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
@@ -82,3 +82,7 @@ class PaymentORM(BaseORM):
     )
 
     __table_args__ = (CheckConstraint("amount > 0", name="amount_positive"),)
+
+
+PaymentsORM = PaymentORM
+__all__ = ["PaymentORM", "PaymentsORM"]

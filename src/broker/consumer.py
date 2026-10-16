@@ -67,7 +67,10 @@ async def send_to_dlq(message: RabbitMessage, reason: str) -> None:
     await message.ack()
 
 
-async def send_webhook_with_retries(webhook_url: str, payload: dict[str, Any]) -> None:
+async def send_webhook_with_retries(
+    webhook_url: str,
+    payload: dict[str, Any],
+) -> None:
     max_retries = settings.processing.webhook_max_retries
     backoff = settings.processing.webhook_retry_backoff
     timeout = settings.processing.webhook_timeout
@@ -111,13 +114,28 @@ async def process_payment(body: dict[str, Any], message: RabbitMessage) -> None:
 
         async with DBManager(async_session_maker) as db:
             service = PaymentsService(db)
-            payment = await db.payments.get_one_or_none(id=payment_id)
+            payment = await db.payments.get_one_or_none(payment_id=payment_id)
             if not payment:
                 await send_to_dlq(message, f"Payment {payment_id} not found in DB")
                 return
 
             payment_dto = PaymentDTO.model_validate(payment)
             if payment_dto.status in (PaymentStatus.SUCCEEDED, PaymentStatus.FAILED):
+                webhook_payload = {
+                    "payment_id": str(payment_dto.payment_id),
+                    "status": payment_dto.status.value,
+                    "amount": float(payment_dto.amount),
+                    "currency": payment_dto.currency.value,
+                    "description": payment_dto.description,
+                    "metadata": payment_dto.payment_metadata,
+                    "created_at": payment_dto.created_at.isoformat(),
+                    "processed_at": (
+                        payment_dto.processed_at.isoformat()
+                        if payment_dto.processed_at
+                        else datetime.now(UTC).isoformat()
+                    ),
+                }
+                await send_webhook_with_retries(payment_dto.webhook_url, webhook_payload)
                 await message.ack()
                 return
 
@@ -138,7 +156,7 @@ async def process_payment(body: dict[str, Any], message: RabbitMessage) -> None:
             )
 
             webhook_payload = {
-                "payment_id": str(payment_dto.id),
+                "payment_id": str(payment_dto.payment_id),
                 "status": new_status.value,
                 "amount": float(payment_dto.amount),
                 "currency": payment_dto.currency.value,

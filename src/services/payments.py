@@ -42,37 +42,38 @@ class PaymentsService(BaseService):
                 PaymentDTO,
                 await self.db.payments.add(add_dto),
             )
-            outbox_event = OutboxCreateDTO(
-                topic=settings.rabbit.queue_name,
-                event_type="PaymentCreated",
-                payload={
-                    "payment_id": str(payment.id),
-                    "amount": float(payment.amount),
-                    "currency": payment.currency.value,
-                    "description": payment.description,
-                    "metadata": payment.payment_metadata,
-                    "status": payment.status.value,
-                    "idempotency_key": payment.idempotency_key,
-                    "webhook_url": payment.webhook_url,
-                    "created_at": payment.created_at.isoformat(),
-                },
-            )
-            await self.db.outbox.add(outbox_event)
-            await self.db.commit()
         except ObjectAlreadyExistsError as exc:
             await self.db.rollback()
             raise PaymentAlreadyExistsError(
                 f"Платеж с ключом идемпотентности '{idempotency_key}' уже существует"
             ) from exc
 
+        outbox_event = OutboxCreateDTO(
+            topic=settings.rabbit.queue_name,
+            event_type="PaymentCreated",
+            payload={
+                "payment_id": str(payment.payment_id),
+                "amount": float(payment.amount),
+                "currency": payment.currency.value,
+                "description": payment.description,
+                "metadata": payment.payment_metadata,
+                "status": payment.status.value,
+                "idempotency_key": payment.idempotency_key,
+                "webhook_url": payment.webhook_url,
+                "created_at": payment.created_at.isoformat(),
+            },
+        )
+        await self.db.outbox.add(outbox_event)
+        await self.db.commit()
+
         return PaymentCreateResponseDTO(
-            payment_id=payment.id,
+            payment_id=payment.payment_id,
             status=payment.status,
             created_at=payment.created_at,
         )
 
     async def get_payment(self, payment_id: uuid.UUID) -> PaymentResponseDTO:
-        payment = await self.db.payments.get_one_or_none(id=payment_id)
+        payment = await self.db.payments.get_one_or_none(payment_id=payment_id)
         if payment is None:
             raise PaymentNotFoundError(f"Платеж с ID '{payment_id}' не найден")
 
@@ -84,14 +85,16 @@ class PaymentsService(BaseService):
         status: PaymentStatus,
         processed_at: datetime,
     ) -> PaymentDTO:
-        existing = await self.db.payments.get_one_or_none(id=payment_id)
+        existing = await self.db.payments.get_one_or_none(payment_id=payment_id)
         if existing is None:
             raise PaymentNotFoundError(f"Платеж с ID '{payment_id}' не найден")
 
         await self.db.payments.update(
             PaymentUpdateDTO(status=status, processed_at=processed_at),
-            id=payment_id,
+            payment_id=payment_id,
         )
         await self.db.commit()
-        updated = cast(PaymentDTO, await self.db.payments.get_one(id=payment_id))
+        updated = cast(
+            PaymentDTO, await self.db.payments.get_one(payment_id=payment_id)
+        )
         return updated

@@ -38,8 +38,8 @@ services:
     networks:
       - payments_network
 
-  backend:
-    container_name: payments_backend
+  api:
+    container_name: payments_api
     restart: unless-stopped
     build:
       context: .
@@ -70,7 +70,7 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-      backend:
+      api:
         condition: service_started
     networks:
       - payments_network

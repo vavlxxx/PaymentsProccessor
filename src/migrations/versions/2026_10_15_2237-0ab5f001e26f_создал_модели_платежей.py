@@ -22,7 +22,7 @@ def upgrade() -> None:
     """Upgrade schema."""
     op.create_table(
         "payments",
-        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column("payment_id", sa.Uuid(), nullable=False),
         sa.Column("amount", sa.Numeric(precision=12, scale=2), nullable=False),
         sa.Column(
             "currency",
@@ -52,7 +52,7 @@ def upgrade() -> None:
         ),
         sa.Column("processed_at", sa.DateTime(timezone=True), nullable=True),
         sa.CheckConstraint("amount > 0", name=op.f("ck_payments_amount_positive")),
-        sa.PrimaryKeyConstraint("id", name=op.f("pk_payments")),
+        sa.PrimaryKeyConstraint("payment_id", name=op.f("pk_payments")),
     )
     op.create_index(
         op.f("ix_payments_idempotency_key"),

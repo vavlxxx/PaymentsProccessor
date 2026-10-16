@@ -3,9 +3,9 @@ import logging
 import sys
 from pathlib import Path
 
-from faststream.rabbit import RabbitBroker
-
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+
+from faststream.rabbit import RabbitBroker
 
 from src.broker.publisher import RabbitPublisher
 from src.config import settings
