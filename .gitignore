@@ -21,7 +21,6 @@ wheels/
 *.egg
 
 .env
-!.env.example
 .venv/
 venv/
 ENV/
@@ -37,7 +36,6 @@ files/
 .ruff_cache
 
 .env*
-!.env.example
 !.env.docker.example
 !.env.postgres.example
 !.env.rabbit.example

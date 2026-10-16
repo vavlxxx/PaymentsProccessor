@@ -50,7 +50,6 @@ PaymentsProccessor/
 ├── .env.docker.example      # Переменные окружения для API и Consumer в Docker
 ├── .env.postgres.example    # Переменные окружения для PostgreSQL
 ├── .env.rabbit.example      # Переменные окружения для RabbitMQ
-├── .env.example             # Пример для локального запуска
 ├── docker-compose.yml       # Конфигурация 4 сервисов (postgres, rabbitmq, backend, consumer)
 ├── Dockerfile               # Multi-stage сборка приложения через uv
 ├── pyproject.toml           # Зависимости проекта
