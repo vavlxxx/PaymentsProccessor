@@ -1,5 +1,5 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, Path, status
 
@@ -15,7 +15,6 @@ from src.api.v1.examples import (
     GET_PAYMENT_RESPONSES,
     PAYMENT_ID_EXAMPLE,
 )
-from src.config import settings
 from src.schemas.payments import (
     PaymentCreateDTO,
     PaymentCreateResponseDTO,
@@ -35,11 +34,6 @@ router = APIRouter(prefix="/payments", tags=["Платежи"])
     "",
     status_code=status.HTTP_202_ACCEPTED,
     summary="Создание платежа",
-    description=(
-        "Принимает запрос на создание платежа, регистрирует его в статусе pending "
-        "и возвращает статус 202 Accepted. "
-        f"Требует заголовок {settings.headers.idempotency_key} для защиты от повторных операций."
-    ),
     responses=CREATE_PAYMENT_RESPONSES,
 )
 async def create_payment(
@@ -66,7 +60,6 @@ async def create_payment(
     "/{payment_id}/",
     status_code=status.HTTP_200_OK,
     summary="Получение информации о платеже",
-    description="Возвращает детальную информацию о платеже по его уникальному идентификатору (UUID).",
     responses=GET_PAYMENT_RESPONSES,
 )
 async def get_payment(
@@ -86,3 +79,12 @@ async def get_payment(
         raise PaymentNotFoundHTTPError(str(exc)) from exc
     except DBQueryError as exc:
         raise DBQueryHTTPError from exc
+
+
+@router.post(
+    "/test-webhook/",
+    status_code=status.HTTP_200_OK,
+    summary="Тестовый эндпоинт для приема вебхуков",
+)
+async def test_webhook(payload: dict[str, Any]) -> dict[str, Any]:
+    return {"status": "ok", "received": payload}

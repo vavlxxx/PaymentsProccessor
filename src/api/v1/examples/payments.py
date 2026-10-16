@@ -1,5 +1,3 @@
-"""Примеры запросов и ответов эндпоинтов платежей для OpenAPI документации."""
-
 from typing import Any
 
 from src.api.v1.examples.common import (
@@ -17,24 +15,24 @@ from src.schemas.payments import (
 PAYMENT_ID_EXAMPLE = "123e4567-e89b-12d3-a456-426614174000"
 
 CREATE_PAYMENT_EXAMPLES: dict[str, Any] = {
-    "rub_payment": {
-        "summary": "Платеж в рублях",
+    "rub_payment_httpbin": {
+        "summary": "Платеж с вебхуком на httpbin.org",
         "value": {
             "amount": 1500.00,
             "currency": "RUB",
-            "description": "Оплата заказа #1024 в интернет-магазине",
+            "description": "Оплата заказа #1024",
             "metadata": {"order_id": 1024, "customer_id": "cust-887"},
-            "webhook_url": "https://merchant.example.com/api/v1/webhook",
+            "webhook_url": "https://httpbin.org/post",
         },
     },
-    "usd_payment": {
-        "summary": "Платеж в долларах",
+    "usd_payment_internal": {
+        "summary": "Платеж с внутренним тестовым вебхуком",
         "value": {
             "amount": 49.99,
             "currency": "USD",
-            "description": "Подписка на сервис Pro Plan (1 месяц)",
+            "description": "Подписка Pro Plan",
             "metadata": {"plan": "pro_monthly"},
-            "webhook_url": "https://merchant.example.com/api/v1/webhook",
+            "webhook_url": "http://backend:8888/api/v1/payments/test-webhook/",
         },
     },
 }

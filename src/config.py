@@ -1,5 +1,3 @@
-"""Конфигурация сервиса процессора платежей."""
-
 from pathlib import Path
 
 from pydantic import BaseModel, SecretStr
@@ -51,10 +49,47 @@ class DBConfig(BaseModel):
         )
 
 
+class RabbitConfig(BaseModel):
+    host: str
+    port: int
+    user: str
+    password: SecretStr
+
+    queue_name: str = "payments.new"
+    retry_queue_name: str = "payments.retry"
+    dlq_name: str = "payments.dlq"
+
+    durable: bool = True
+    max_retries: int = 3
+    retry_ttl: int = 5000
+    on_return_raises: bool = True
+
+    @property
+    def url(self) -> str:
+        return f"amqp://{self.user}:{self.password.get_secret_value()}@{self.host}:{self.port}/"
+
+
+class ProcessingConfig(BaseModel):
+    min_delay_seconds: float = 2.0
+    max_delay_seconds: float = 5.0
+    success_rate: float = 0.9
+    webhook_timeout: float = 5.0
+    webhook_max_retries: int = 3
+    webhook_retry_backoff: float = 1.0
+
+
+class OutboxConfig(BaseModel):
+    poll_interval: float = 1.0
+    batch_size: int = 50
+
+
 class Settings(BaseSettings):
     api: APIConfig
     db: DBConfig
+    rabbit: RabbitConfig
     headers: HeadersConfig = HeadersConfig()
+    processing: ProcessingConfig = ProcessingConfig()
+    outbox: OutboxConfig = OutboxConfig()
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",

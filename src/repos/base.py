@@ -102,8 +102,11 @@ class BaseRepo:
         obj = result.scalars().one()
         return self.schema.model_validate(obj)
 
-    async def update(self, data: BaseDTO, *filter, **filter_by) -> int:
-        data_ = data.model_dump(exclude_unset=True)
+    async def update(self, data: BaseDTO | dict[str, Any], *filter, **filter_by) -> int:
+        if isinstance(data, dict):
+            data_ = data
+        else:
+            data_ = data.model_dump(exclude_unset=True)
         to_update = {k: v for k, v in data_.items() if v is not None}
         if not to_update:
             return 0

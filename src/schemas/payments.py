@@ -23,7 +23,9 @@ class PaymentDTO(BaseDTO):
     idempotency_key: str = Field(description="Уникальный ключ идемпотентности")
     webhook_url: str = Field(description="URL для webhook уведомления")
     created_at: datetime = Field(description="Дата и время создания")
-    processed_at: datetime | None = Field(default=None, description="Дата и время обработки")
+    processed_at: datetime | None = Field(
+        default=None, description="Дата и время обработки"
+    )
 
 
 class PaymentAddDTO(BaseDTO):
@@ -35,9 +37,13 @@ class PaymentAddDTO(BaseDTO):
         validation_alias=AliasChoices("payment_metadata", "metadata"),
         description="Метаданные платежа",
     )
-    idempotency_key: str = Field(min_length=1, max_length=255, description="Ключ идемпотентности")
+    idempotency_key: str = Field(
+        min_length=1, max_length=255, description="Ключ идемпотентности"
+    )
     webhook_url: str = Field(min_length=1, max_length=2048, description="URL вебхука")
-    status: PaymentStatus = Field(default=PaymentStatus.PENDING, description="Начальный статус платежа")
+    status: PaymentStatus = Field(
+        default=PaymentStatus.PENDING, description="Начальный статус платежа"
+    )
 
 
 class PaymentCreateDTO(BaseDTO):
@@ -63,7 +69,7 @@ class PaymentCreateDTO(BaseDTO):
         min_length=1,
         max_length=2048,
         description="URL для отправки вебхука с результатом обработки",
-        examples=["https://example.com/webhook/payments"],
+        examples=["https://httpbin.org/post"],
     )
 
     def to_add_dto(self, idempotency_key: str) -> PaymentAddDTO:
@@ -105,3 +111,12 @@ class PaymentResponseDTO(BaseDTO):
     webhook_url: str = Field(description="URL вебхука")
     created_at: datetime = Field(description="Дата создания")
     processed_at: datetime | None = Field(default=None, description="Дата обработки")
+
+
+class PaymentUpdateDTO(BaseDTO):
+    status: PaymentStatus | None = Field(
+        default=None, description="Обновленный статус платежа"
+    )
+    processed_at: datetime | None = Field(
+        default=None, description="Дата и время обработки"
+    )

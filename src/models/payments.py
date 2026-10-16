@@ -81,6 +81,4 @@ class PaymentORM(BaseORM):
         nullable=True,
     )
 
-    __table_args__ = (
-        CheckConstraint("amount > 0", name="amount_positive"),
-    )
+    __table_args__ = (CheckConstraint("amount > 0", name="amount_positive"),)

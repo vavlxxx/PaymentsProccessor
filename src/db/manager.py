@@ -4,6 +4,7 @@ from typing import Self
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from src.repos.outbox import OutboxRepo
 from src.repos.payments import PaymentsRepo
 from src.utils.exceptions import DBConnectionError
 
@@ -18,6 +19,7 @@ class DBManager:
     async def __aenter__(self) -> Self:
         self.session: AsyncSession = self.session_factory()
         self.payments = PaymentsRepo(self.session)
+        self.outbox = OutboxRepo(self.session)
         return self
 
     async def __aexit__(

@@ -26,9 +26,7 @@ def upgrade() -> None:
         sa.Column("amount", sa.Numeric(precision=12, scale=2), nullable=False),
         sa.Column(
             "currency",
-            sa.Enum(
-                "RUB", "USD", "EUR", name="currency_enum", native_enum=False
-            ),
+            sa.Enum("RUB", "USD", "EUR", name="currency_enum", native_enum=False),
             nullable=False,
         ),
         sa.Column("description", sa.Text(), nullable=False),
@@ -53,9 +51,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("processed_at", sa.DateTime(timezone=True), nullable=True),
-        sa.CheckConstraint(
-            "amount > 0", name=op.f("ck_payments_amount_positive")
-        ),
+        sa.CheckConstraint("amount > 0", name=op.f("ck_payments_amount_positive")),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_payments")),
     )
     op.create_index(
@@ -64,9 +60,7 @@ def upgrade() -> None:
         ["idempotency_key"],
         unique=True,
     )
-    op.create_index(
-        op.f("ix_payments_status"), "payments", ["status"], unique=False
-    )
+    op.create_index(op.f("ix_payments_status"), "payments", ["status"], unique=False)
 
 
 def downgrade() -> None:

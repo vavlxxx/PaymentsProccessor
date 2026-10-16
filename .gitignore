@@ -40,3 +40,4 @@ files/
 !.env.example
 !.env.docker.example
 !.env.postgres.example
+!.env.rabbit.example

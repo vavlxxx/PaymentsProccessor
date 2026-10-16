@@ -29,3 +29,11 @@ class DBQueryError(ApplicationBaseError):
 
 class DBConnectionError(ApplicationBaseError):
     detail = "Ошибка соединения с базой данных"
+
+
+class BrokerError(ApplicationBaseError):
+    detail = "Ошибка взаимодействия с брокером сообщений"
+
+
+class WebhookDeliveryError(ApplicationBaseError):
+    detail = "Ошибка отправки вебхука после всех попыток"

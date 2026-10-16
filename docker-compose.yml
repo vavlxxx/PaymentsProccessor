@@ -18,6 +18,26 @@ services:
     networks:
       - payments_network
 
+  rabbitmq:
+    image: rabbitmq:3.11-management-alpine
+    container_name: payments_rabbitmq
+    restart: unless-stopped
+    env_file:
+      - ./.env.rabbit.example
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - payments_network
+
   backend:
     container_name: payments_backend
     restart: unless-stopped
@@ -29,13 +49,35 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     ports:
       - "8888:8888"
     networks:
       - payments_network
 
+  consumer:
+    container_name: payments_consumer
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "src.broker.rabbit"]
+    env_file:
+      - ./.env.docker.example
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    networks:
+      - payments_network
+
 volumes:
   postgres_data:
+  rabbitmq_data:
 
 networks:
   payments_network:
