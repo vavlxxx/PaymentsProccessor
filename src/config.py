@@ -16,6 +16,11 @@ class APIConfig(BaseModel):
     reload: bool = False
 
 
+class HeadersConfig(BaseModel):
+    api_key: str = "X-API-Key"
+    idempotency_key: str = "Idempotency-Key"
+
+
 class DBConfig(BaseModel):
     host: str
     port: int
@@ -49,6 +54,7 @@ class DBConfig(BaseModel):
 class Settings(BaseSettings):
     api: APIConfig
     db: DBConfig
+    headers: HeadersConfig = HeadersConfig()
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",

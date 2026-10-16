@@ -34,4 +34,9 @@ htmlcov/
 *.log
 logs/
 files/
-.env.postgres
+.ruff_cache
+
+.env*
+!.env.example
+!.env.docker.example
+!.env.postgres.example

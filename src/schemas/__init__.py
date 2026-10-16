@@ -1,4 +1,5 @@
 from src.schemas.base import BaseDTO
+from src.schemas.errors import ErrorResponseDTO
 from src.schemas.payments import (
     PaymentAddDTO,
     PaymentCreateDTO,
@@ -9,6 +10,7 @@ from src.schemas.payments import (
 
 __all__ = [
     "BaseDTO",
+    "ErrorResponseDTO",
     "PaymentAddDTO",
     "PaymentCreateDTO",
     "PaymentCreateResponseDTO",
