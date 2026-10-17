@@ -11,7 +11,6 @@ from src.utils.enums import Currency, PaymentStatus
 
 @pytest.mark.asyncio
 async def test_create_payment_success(client: AsyncClient, db_manager: DBManager):
-    """Тест успешного создания платежа и формирования записи в outbox."""
     idempotency_key = f"key-{uuid.uuid4()}"
     payload = {
         "amount": 250.75,
@@ -35,7 +34,6 @@ async def test_create_payment_success(client: AsyncClient, db_manager: DBManager
 
     payment_id = uuid.UUID(data["payment_id"])
 
-    # Проверяем, что платеж действительно сохранился в БД по payment_id
     payment_in_db = await db_manager.payments.get_one_or_none(payment_id=payment_id)
     assert payment_in_db is not None
     assert payment_in_db.payment_id == payment_id
@@ -44,7 +42,6 @@ async def test_create_payment_success(client: AsyncClient, db_manager: DBManager
     assert payment_in_db.idempotency_key == idempotency_key
     assert payment_in_db.payment_metadata == {"order_id": 123, "user_id": 42}
 
-    # Проверяем, что событие записано в outbox в рамках той же транзакции
     outbox_events = await db_manager.outbox.get_all()
     matching_events = [
         ev for ev in outbox_events if ev.payload.get("payment_id") == str(payment_id)
@@ -56,7 +53,6 @@ async def test_create_payment_success(client: AsyncClient, db_manager: DBManager
 
 @pytest.mark.asyncio
 async def test_create_payment_unauthorized(client: AsyncClient):
-    """Тест создания платежа без корректного API-ключа (401)."""
     payload = {
         "amount": 100.00,
         "currency": "RUB",
@@ -64,7 +60,6 @@ async def test_create_payment_unauthorized(client: AsyncClient):
         "webhook_url": "https://example.com",
     }
 
-    # Без ключа
     resp_no_key = await client.post(
         "/api/v1/payments",
         json=payload,
@@ -72,7 +67,6 @@ async def test_create_payment_unauthorized(client: AsyncClient):
     )
     assert resp_no_key.status_code == 401
 
-    # С неверным ключом
     resp_wrong_key = await client.post(
         "/api/v1/payments",
         json=payload,
@@ -83,7 +77,6 @@ async def test_create_payment_unauthorized(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_create_payment_missing_idempotency_key(client: AsyncClient):
-    """Тест создания платежа без обязательного заголовка Idempotency-Key (400)."""
     payload = {
         "amount": 100.00,
         "currency": "RUB",
@@ -101,7 +94,6 @@ async def test_create_payment_missing_idempotency_key(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_create_payment_idempotency_duplicate(client: AsyncClient):
-    """Тест защиты от дублирования платежа с одинаковым Idempotency-Key (409)."""
     idempotency_key = f"key-duplicate-{uuid.uuid4()}"
     payload = {
         "amount": 500.00,
@@ -110,7 +102,6 @@ async def test_create_payment_idempotency_duplicate(client: AsyncClient):
         "webhook_url": "https://example.com/webhook",
     }
 
-    # Первый запрос успешен (202)
     resp1 = await client.post(
         "/api/v1/payments",
         json=payload,
@@ -118,7 +109,6 @@ async def test_create_payment_idempotency_duplicate(client: AsyncClient):
     )
     assert resp1.status_code == 202
 
-    # Повторный запрос с тем же Idempotency-Key должен вернуть 409 Conflict
     resp2 = await client.post(
         "/api/v1/payments",
         json=payload,
@@ -130,10 +120,8 @@ async def test_create_payment_idempotency_duplicate(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_create_payment_validation_error(client: AsyncClient):
-    """Тест валидации тела запроса (отрицательная сумма, невалидная валюта)."""
     idempotency_key = f"key-val-{uuid.uuid4()}"
 
-    # Сумма <= 0
     resp_bad_amount = await client.post(
         "/api/v1/payments",
         json={
@@ -146,7 +134,6 @@ async def test_create_payment_validation_error(client: AsyncClient):
     )
     assert resp_bad_amount.status_code == 422
 
-    # Неподдерживаемая валюта
     resp_bad_curr = await client.post(
         "/api/v1/payments",
         json={
@@ -162,7 +149,6 @@ async def test_create_payment_validation_error(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_get_payment_success(client: AsyncClient, sample_payment):
-    """Тест получения информации о платеже по payment_id (200)."""
     response = await client.get(f"/api/v1/payments/{sample_payment.payment_id}/")
     assert response.status_code == 200
     data = response.json()
@@ -179,7 +165,6 @@ async def test_get_payment_success(client: AsyncClient, sample_payment):
 
 @pytest.mark.asyncio
 async def test_get_payment_not_found(client: AsyncClient):
-    """Тест получения несуществующего платежа (404)."""
     non_existing_id = uuid.uuid4()
     response = await client.get(f"/api/v1/payments/{non_existing_id}/")
     assert response.status_code == 404
@@ -188,7 +173,6 @@ async def test_get_payment_not_found(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_get_payment_unauthorized(client: AsyncClient, sample_payment):
-    """Тест получения платежа без API ключа (401)."""
     response = await client.get(
         f"/api/v1/payments/{sample_payment.payment_id}/",
         headers={settings.headers.api_key: ""},
@@ -198,7 +182,6 @@ async def test_get_payment_unauthorized(client: AsyncClient, sample_payment):
 
 @pytest.mark.asyncio
 async def test_webhook_test_endpoint(client: AsyncClient):
-    """Тест вспомогательного тестового вебхук эндпоинта."""
     payload = {"test": "data", "status": "ok"}
     response = await client.post("/api/v1/payments/test-webhook/", json=payload)
     assert response.status_code == 200

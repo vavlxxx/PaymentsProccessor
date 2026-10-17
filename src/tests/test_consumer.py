@@ -17,7 +17,6 @@ from src.utils.exceptions import WebhookDeliveryError
 
 @pytest.mark.asyncio
 async def test_send_webhook_success():
-    """Тест успешной отправки webhook с первого раза."""
     req = httpx.Request("POST", "https://example.com/webhook")
     mock_resp = httpx.Response(status_code=200, request=req)
 
@@ -32,7 +31,6 @@ async def test_send_webhook_success():
 
 @pytest.mark.asyncio
 async def test_send_webhook_retry_then_success():
-    """Тест отправки webhook с повторной попыткой при временной ошибке."""
     req = httpx.Request("POST", "https://example.com/webhook")
     mock_error_resp = httpx.Response(status_code=500, request=req)
     mock_ok_resp = httpx.Response(status_code=200, request=req)
@@ -55,7 +53,6 @@ async def test_send_webhook_retry_then_success():
 
 @pytest.mark.asyncio
 async def test_send_webhook_exhausts_retries():
-    """Тест вызова WebhookDeliveryError при исчерпании всех попыток."""
     req = httpx.Request("POST", "https://example.com/webhook")
     mock_error_resp = httpx.Response(status_code=502, request=req)
 
@@ -76,7 +73,6 @@ async def test_send_webhook_exhausts_retries():
 
 @pytest.mark.asyncio
 async def test_process_payment_missing_id():
-    """Тест отправки сообщения в DLQ при отсутствии payment_id в сообщении."""
     mock_message = AsyncMock()
     mock_message.headers = {}
     mock_message.body = {}
@@ -89,7 +85,6 @@ async def test_process_payment_missing_id():
 
 @pytest.mark.asyncio
 async def test_process_payment_not_found(session_factory):
-    """Тест отправки сообщения в DLQ, если платеж не найден в базе данных."""
     non_existing_id = str(uuid.uuid4())
     mock_message = AsyncMock()
     mock_message.headers = {}
@@ -106,7 +101,6 @@ async def test_process_payment_not_found(session_factory):
 
 @pytest.mark.asyncio
 async def test_process_payment_exceeded_retries():
-    """Тест отправки сообщения в DLQ при превышении счетчика x-death."""
     mock_message = AsyncMock()
     mock_message.headers = {
         "x-death": [{"count": 3, "queue": "payments.new"}]
@@ -121,7 +115,6 @@ async def test_process_payment_exceeded_retries():
 
 @pytest.mark.asyncio
 async def test_process_payment_success_flow(session_factory, db_manager: DBManager):
-    """Тест полного цикла успешной обработки платежа consumer'ом."""
     payment_id = uuid.uuid4()
     add_dto = PaymentAddDTO(
         payment_id=payment_id,
@@ -147,12 +140,9 @@ async def test_process_payment_success_flow(session_factory, db_manager: DBManag
     ):
         await process_payment({"payment_id": str(payment_id)}, mock_message)
 
-        # Проверяем, что consumer подтвердил сообщение
         mock_message.ack.assert_called_once()
-        # Проверяем, что webhook был вызван
         mock_webhook.assert_called_once()
 
-        # Проверяем, что статус платежа в БД обновлен
         updated_payment = await db_manager.payments.get_one(payment_id=payment_id)
         assert updated_payment.status in (PaymentStatus.SUCCEEDED, PaymentStatus.FAILED)
         assert updated_payment.processed_at is not None

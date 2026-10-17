@@ -19,7 +19,6 @@ from src.utils.enums import Currency, PaymentStatus
 
 @pytest.fixture
 async def async_engine():
-    """Create an in-memory SQLite async engine for tests."""
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         echo=False,
@@ -34,7 +33,6 @@ async def async_engine():
 
 @pytest.fixture
 async def session_factory(async_engine):
-    """Create an async sessionmaker bound to the test engine."""
     return async_sessionmaker(
         bind=async_engine,
         class_=AsyncSession,
@@ -45,21 +43,18 @@ async def session_factory(async_engine):
 
 @pytest.fixture
 async def db_manager(session_factory) -> AsyncGenerator[DBManager, None]:
-    """Provide a DBManager connected to the in-memory test database."""
     async with DBManager(session_factory) as db:
         yield db
 
 
 @pytest.fixture
 async def client(session_factory) -> AsyncGenerator[AsyncClient, None]:
-    """Provide an authenticated AsyncClient with in-memory database."""
     async def override_get_db() -> AsyncGenerator[DBManager, None]:
         async with DBManager(session_factory) as db:
             yield db
 
     app.dependency_overrides[get_db] = override_get_db
 
-    # Use custom lifespan that does not start background relay loop or rabbit connection
     @asynccontextmanager
     async def test_lifespan(_):
         yield
@@ -83,7 +78,6 @@ async def client(session_factory) -> AsyncGenerator[AsyncClient, None]:
 
 @pytest.fixture
 async def sample_payment(db_manager: DBManager) -> PaymentORM:
-    """Create a sample payment record in the test database."""
     add_dto = PaymentAddDTO(
         payment_id=uuid.uuid4(),
         amount=Decimal("1000.50"),
