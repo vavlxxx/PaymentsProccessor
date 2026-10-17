@@ -135,7 +135,9 @@ async def process_payment(body: dict[str, Any], message: RabbitMessage) -> None:
                         else datetime.now(UTC).isoformat()
                     ),
                 }
-                await send_webhook_with_retries(payment_dto.webhook_url, webhook_payload)
+                await send_webhook_with_retries(
+                    payment_dto.webhook_url, webhook_payload
+                )
                 await message.ack()
                 return
 

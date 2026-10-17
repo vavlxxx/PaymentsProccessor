@@ -14,7 +14,7 @@ from sqlalchemy import (
     Uuid,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, synonym
 
 from src.models.base import BaseORM
 from src.utils.enums import Currency, PaymentStatus
@@ -28,6 +28,7 @@ class PaymentORM(BaseORM):
         primary_key=True,
         default=uuid.uuid4,
     )
+    id = synonym("payment_id")
     amount: Mapped[Decimal] = mapped_column(
         Numeric(12, 2),
         nullable=False,

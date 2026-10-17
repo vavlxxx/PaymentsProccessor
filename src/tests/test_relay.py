@@ -1,14 +1,11 @@
 from unittest.mock import AsyncMock
 
-import pytest
-
 from src.broker.relay import run_outbox_relay
 from src.db.manager import DBManager
 from src.schemas.outbox import OutboxCreateDTO
 from src.utils.enums import OutboxStatus
 
 
-@pytest.mark.asyncio
 async def test_outbox_relay_publishes_pending_events(db_manager: DBManager):
     event1 = OutboxCreateDTO(
         topic="payments.new",
@@ -35,7 +32,6 @@ async def test_outbox_relay_publishes_pending_events(db_manager: DBManager):
     assert all(e.status == OutboxStatus.SUCCESS for e in all_events)
 
 
-@pytest.mark.asyncio
 async def test_outbox_relay_handles_publisher_error(db_manager: DBManager):
     event = OutboxCreateDTO(
         topic="payments.new",
@@ -57,7 +53,6 @@ async def test_outbox_relay_handles_publisher_error(db_manager: DBManager):
     assert all_events[0].status == OutboxStatus.PENDING
 
 
-@pytest.mark.asyncio
 async def test_outbox_relay_empty(db_manager: DBManager):
     mock_publisher = AsyncMock()
     sent = await run_outbox_relay(db_manager, mock_publisher)

@@ -1,7 +1,6 @@
 import uuid
 from decimal import Decimal
 
-import pytest
 from httpx import AsyncClient
 
 from src.config import settings
@@ -9,7 +8,6 @@ from src.db.manager import DBManager
 from src.utils.enums import Currency, PaymentStatus
 
 
-@pytest.mark.asyncio
 async def test_create_payment_success(client: AsyncClient, db_manager: DBManager):
     idempotency_key = f"key-{uuid.uuid4()}"
     payload = {
@@ -51,7 +49,6 @@ async def test_create_payment_success(client: AsyncClient, db_manager: DBManager
     assert matching_events[0].topic == settings.rabbit.queue_name
 
 
-@pytest.mark.asyncio
 async def test_create_payment_unauthorized(client: AsyncClient):
     payload = {
         "amount": 100.00,
@@ -75,7 +72,6 @@ async def test_create_payment_unauthorized(client: AsyncClient):
     assert resp_wrong_key.status_code == 401
 
 
-@pytest.mark.asyncio
 async def test_create_payment_missing_idempotency_key(client: AsyncClient):
     payload = {
         "amount": 100.00,
@@ -92,7 +88,6 @@ async def test_create_payment_missing_idempotency_key(client: AsyncClient):
     assert "обязателен" in response.json()["message"]
 
 
-@pytest.mark.asyncio
 async def test_create_payment_idempotency_duplicate(client: AsyncClient):
     idempotency_key = f"key-duplicate-{uuid.uuid4()}"
     payload = {
@@ -118,7 +113,6 @@ async def test_create_payment_idempotency_duplicate(client: AsyncClient):
     assert "уже существует" in resp2.json()["message"]
 
 
-@pytest.mark.asyncio
 async def test_create_payment_validation_error(client: AsyncClient):
     idempotency_key = f"key-val-{uuid.uuid4()}"
 
@@ -147,7 +141,6 @@ async def test_create_payment_validation_error(client: AsyncClient):
     assert resp_bad_curr.status_code == 422
 
 
-@pytest.mark.asyncio
 async def test_get_payment_success(client: AsyncClient, sample_payment):
     response = await client.get(f"/api/v1/payments/{sample_payment.payment_id}/")
     assert response.status_code == 200
@@ -163,7 +156,6 @@ async def test_get_payment_success(client: AsyncClient, sample_payment):
     assert "created_at" in data
 
 
-@pytest.mark.asyncio
 async def test_get_payment_not_found(client: AsyncClient):
     non_existing_id = uuid.uuid4()
     response = await client.get(f"/api/v1/payments/{non_existing_id}/")
@@ -171,7 +163,6 @@ async def test_get_payment_not_found(client: AsyncClient):
     assert f"Платеж с ID '{non_existing_id}' не найден" in response.json()["message"]
 
 
-@pytest.mark.asyncio
 async def test_get_payment_unauthorized(client: AsyncClient, sample_payment):
     response = await client.get(
         f"/api/v1/payments/{sample_payment.payment_id}/",
@@ -180,7 +171,6 @@ async def test_get_payment_unauthorized(client: AsyncClient, sample_payment):
     assert response.status_code == 401
 
 
-@pytest.mark.asyncio
 async def test_webhook_test_endpoint(client: AsyncClient):
     payload = {"test": "data", "status": "ok"}
     response = await client.post("/api/v1/payments/test-webhook/", json=payload)

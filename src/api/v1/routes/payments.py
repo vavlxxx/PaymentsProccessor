@@ -81,7 +81,7 @@ async def get_payment(
         raise DBQueryHTTPError from exc
 
 
-@router.webhooks.post(
+@router.post(
     "/test-webhook/",
     status_code=status.HTTP_200_OK,
     summary="Тестовый эндпоинт для приема вебхуков",

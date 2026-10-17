@@ -11,7 +11,6 @@ from src.utils.enums import Currency, PaymentStatus
 from src.utils.exceptions import PaymentAlreadyExistsError, PaymentNotFoundError
 
 
-@pytest.mark.asyncio
 async def test_service_create_payment_and_outbox(db_manager: DBManager):
     service = PaymentsService(db_manager)
     idempotency_key = f"key-svc-{uuid.uuid4()}"
@@ -40,7 +39,6 @@ async def test_service_create_payment_and_outbox(db_manager: DBManager):
     assert outbox_records[0].payload["payment_id"] == str(result.payment_id)
 
 
-@pytest.mark.asyncio
 async def test_service_duplicate_idempotency_key(db_manager: DBManager):
     service = PaymentsService(db_manager)
     idempotency_key = f"key-dup-{uuid.uuid4()}"
@@ -58,7 +56,6 @@ async def test_service_duplicate_idempotency_key(db_manager: DBManager):
         await service.create_payment(create_dto, idempotency_key=idempotency_key)
 
 
-@pytest.mark.asyncio
 async def test_service_get_payment(db_manager: DBManager, sample_payment):
     service = PaymentsService(db_manager)
 
@@ -71,7 +68,6 @@ async def test_service_get_payment(db_manager: DBManager, sample_payment):
         await service.get_payment(payment_id=uuid.uuid4())
 
 
-@pytest.mark.asyncio
 async def test_service_update_payment_status(db_manager: DBManager, sample_payment):
     service = PaymentsService(db_manager)
     now = datetime.now(UTC)

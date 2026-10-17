@@ -39,3 +39,5 @@ files/
 !.env.docker.example
 !.env.postgres.example
 !.env.rabbit.example
+!.env.example
+!.env.pytest.example

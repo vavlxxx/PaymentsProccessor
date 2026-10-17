@@ -15,7 +15,6 @@ from src.utils.enums import Currency, PaymentStatus
 from src.utils.exceptions import WebhookDeliveryError
 
 
-@pytest.mark.asyncio
 async def test_send_webhook_success():
     req = httpx.Request("POST", "https://example.com/webhook")
     mock_resp = httpx.Response(status_code=200, request=req)
@@ -29,7 +28,6 @@ async def test_send_webhook_success():
         assert mock_post.call_count == 1
 
 
-@pytest.mark.asyncio
 async def test_send_webhook_retry_then_success():
     req = httpx.Request("POST", "https://example.com/webhook")
     mock_error_resp = httpx.Response(status_code=500, request=req)
@@ -40,7 +38,9 @@ async def test_send_webhook_retry_then_success():
         patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep,
     ):
         mock_post.side_effect = [
-            httpx.HTTPStatusError("Server error", request=req, response=mock_error_resp),
+            httpx.HTTPStatusError(
+                "Server error", request=req, response=mock_error_resp
+            ),
             mock_ok_resp,
         ]
         await send_webhook_with_retries(
@@ -51,7 +51,6 @@ async def test_send_webhook_retry_then_success():
         assert mock_sleep.call_count == 1
 
 
-@pytest.mark.asyncio
 async def test_send_webhook_exhausts_retries():
     req = httpx.Request("POST", "https://example.com/webhook")
     mock_error_resp = httpx.Response(status_code=502, request=req)
@@ -71,7 +70,6 @@ async def test_send_webhook_exhausts_retries():
         assert mock_post.call_count == 3
 
 
-@pytest.mark.asyncio
 async def test_process_payment_missing_id():
     mock_message = AsyncMock()
     mock_message.headers = {}
@@ -83,7 +81,6 @@ async def test_process_payment_missing_id():
         assert "Missing payment_id" in mock_dlq.call_args[0][1]
 
 
-@pytest.mark.asyncio
 async def test_process_payment_not_found(session_factory):
     non_existing_id = str(uuid.uuid4())
     mock_message = AsyncMock()
@@ -99,12 +96,9 @@ async def test_process_payment_not_found(session_factory):
         assert "not found in DB" in mock_dlq.call_args[0][1]
 
 
-@pytest.mark.asyncio
 async def test_process_payment_exceeded_retries():
     mock_message = AsyncMock()
-    mock_message.headers = {
-        "x-death": [{"count": 3, "queue": "payments.new"}]
-    }
+    mock_message.headers = {"x-death": [{"count": 3, "queue": "payments.new"}]}
     mock_message.body = {"payment_id": str(uuid.uuid4())}
 
     with patch("src.broker.consumer.send_to_dlq", new_callable=AsyncMock) as mock_dlq:
@@ -113,7 +107,6 @@ async def test_process_payment_exceeded_retries():
         assert "Exceeded max retries" in mock_dlq.call_args[0][1]
 
 
-@pytest.mark.asyncio
 async def test_process_payment_success_flow(session_factory, db_manager: DBManager):
     payment_id = uuid.uuid4()
     add_dto = PaymentAddDTO(
@@ -136,7 +129,9 @@ async def test_process_payment_success_flow(session_factory, db_manager: DBManag
     with (
         patch("src.broker.consumer.async_session_maker", session_factory),
         patch("asyncio.sleep", new_callable=AsyncMock),
-        patch("src.broker.consumer.send_webhook_with_retries", new_callable=AsyncMock) as mock_webhook,
+        patch(
+            "src.broker.consumer.send_webhook_with_retries", new_callable=AsyncMock
+        ) as mock_webhook,
     ):
         await process_payment({"payment_id": str(payment_id)}, mock_message)
 
